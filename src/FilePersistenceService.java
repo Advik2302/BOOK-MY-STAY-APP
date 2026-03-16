@@ -1,0 +1,71 @@
+import java.io.*;
+import java.util.Map;
+
+/**
+ * ***************************************************************
+ * CLASS - FilePersistenceService
+ * ***************************************************************
+ * 
+ * Use Case 12: Data Persistence & System Recovery
+ * 
+ * Description:
+ * This class is responsible for persisting
+ * critical system state to a local text file.
+ * 
+ * It supports:
+ * - Saving room inventory state
+ * - Restoring inventory on system startup
+ * 
+ * An external or application property
+ * is used in this use case.
+ * 
+ * @version 12.0
+ */
+public class FilePersistenceService {
+
+    /**
+     * Saves room inventory state to a file.
+     * 
+     * Each line follows the format:
+     * roomType=availableCount
+     * 
+     * @param inventory centralized room inventory
+     * @param filePath path to persistence file
+     */
+    public void saveInventory(RoomInventory inventory, String filePath) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
+            for (Map.Entry<String, Integer> entry : inventory.getRoomAvailability().entrySet()) {
+                writer.println(entry.getKey() + "=" + entry.getValue());
+            }
+            System.out.println("Inventory saved successfully.");
+        } catch (IOException e) {
+            System.out.println("Failed to save inventory: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Loads room inventory state from a file.
+     * 
+     * @param inventory centralized room inventory
+     * @param filePath path to persistence file
+     */
+    public void loadInventory(RoomInventory inventory, String filePath) {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            System.out.println("No valid inventory data found. Starting fresh.");
+            return;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split("=");
+                if (parts.length == 2) {
+                    inventory.updateAvailability(parts[0], Integer.parseInt(parts[1]));
+                }
+            }
+        } catch (IOException | NumberFormatException e) {
+            System.out.println("Failed to load inventory: " + e.getMessage());
+        }
+    }
+}
